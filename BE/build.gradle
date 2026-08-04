@@ -21,6 +21,20 @@ repositories {
     mavenCentral()
 }
 
+def localEnv = [:]
+def localEnvFile = rootProject.file('../.env')
+if (localEnvFile.exists()) {
+    localEnvFile.eachLine('UTF-8') { line ->
+        def trimmed = line.trim()
+        if (trimmed && !trimmed.startsWith('#') && trimmed.contains('=')) {
+            def separator = trimmed.indexOf('=')
+            def key = trimmed.substring(0, separator).trim()
+            def value = trimmed.substring(separator + 1).trim()
+            localEnv[key] = value
+        }
+    }
+}
+
 dependencies {
     // Spring
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -54,6 +68,11 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    environment localEnv
+}
+
+tasks.named('bootRun') {
+    environment localEnv
 }
 
 spotless {
