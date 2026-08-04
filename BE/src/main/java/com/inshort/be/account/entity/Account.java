@@ -15,46 +15,34 @@ import lombok.*;
 @Builder
 public class Account extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    /**
-     * 계좌 소유자
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  /** 계좌 소유자 */
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    /**
-     * 계좌가 속한 은행
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "bank_id", nullable = false)
-    private Bank bank;
+  /** 계좌가 속한 은행 */
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "bank_id", nullable = false)
+  private Bank bank;
 
-    /**
-     * 계좌번호
-     */
-    @Column(name = "account_number", nullable = false, unique = true, length = 30)
-    private String accountNumber;
+  /** 계좌번호 */
+  @Column(name = "account_number", nullable = false, unique = true, length = 30)
+  private String accountNumber;
 
-    /**
-     * 예금주
-     */
-    @Column(nullable = false, length = 30)
-    private String holder;
+  /** 예금주 */
+  @Column(nullable = false, length = 30)
+  private String holder;
 
-    /**
-     * 현재 잔액
-     */
-    @Column(nullable = false)
-    private Long balance;
+  /** 현재 잔액 */
+  @Column(nullable = false)
+  private Long balance;
 
-    /**
-     * 계좌 상태
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private AccountStatus status;
+  /** 계좌 상태 */
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private AccountStatus status;
 }

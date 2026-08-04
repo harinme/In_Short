@@ -15,40 +15,30 @@ import lombok.*;
 @Builder
 public class Conversation extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    /**
-     * 대화 사용자
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  /** 대화 사용자 */
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    /**
-     * 대화 세션 ID
-     */
-    @Column(nullable = false, length = 100)
-    private String sessionId;
+  /** 대화 세션 ID */
+  @Column(nullable = false, length = 100)
+  private String sessionId;
 
-    /**
-     * USER / ASSISTANT
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ConversationRole role;
+  /** USER / ASSISTANT */
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private ConversationRole role;
 
-    /**
-     * AI가 판단한 의도
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ConversationIntent intent;
+  /** AI가 판단한 의도 */
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private ConversationIntent intent;
 
-    /**
-     * 실제 대화 내용
-     */
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String content;
+  /** 실제 대화 내용 */
+  @Column(nullable = false, columnDefinition = "TEXT")
+  private String content;
 }
