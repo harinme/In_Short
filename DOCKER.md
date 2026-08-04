@@ -18,13 +18,23 @@ docker compose ps
 
 ## 선택 사항: 로컬 MySQL
 
-공용 MySQL을 사용할 수 없을 때만 로컬 MySQL 프로필을 실행한다. 이때 `.env`의 MySQL 호스트, 포트, 사용자, 비밀번호와 SSL 모드를 로컬 값으로 변경해야 한다.
+공용 MySQL을 사용할 수 없을 때만 로컬 MySQL 프로필을 실행한다. `.env.example`에는 공용 설정과 로컬 설정이 함께 작성되어 있다. `.env`에서 공용 MySQL 값 5개를 주석 처리하고, 바로 아래의 로컬 MySQL 값 5개를 주석 해제하여 전환한다.
 
 ```bash
 docker compose --profile local-mysql up -d mysql
 ```
 
-로컬 MySQL의 권장 설정은 `MYSQL_HOST=mysql`, `MYSQL_PORT=3306`, `MYSQL_SSL_MODE=PREFERRED`이다.
+로컬 MySQL의 권장 설정은 다음과 같다.
+
+```dotenv
+MYSQL_HOST=mysql
+MYSQL_PORT=3306
+MYSQL_USER=hanmadi
+MYSQL_PASSWORD=local-password
+MYSQL_SSL_MODE=PREFERRED
+```
+
+공용 MySQL로 돌아갈 때는 로컬 값들을 다시 주석 처리하고 공용 값들을 주석 해제한다. 같은 변수의 공용 값과 로컬 값을 동시에 활성화하지 않는다.
 
 ## 선택 사항: 로컬 Redis
 
