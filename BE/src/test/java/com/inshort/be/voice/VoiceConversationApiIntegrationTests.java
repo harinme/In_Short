@@ -1,6 +1,5 @@
 package com.inshort.be.voice;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -15,12 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@WithMockUser
 @EnabledIfEnvironmentVariable(named = "RUN_REDIS_INTEGRATION_TEST", matches = "true")
 class VoiceConversationApiIntegrationTests {
 
@@ -31,7 +28,7 @@ class VoiceConversationApiIntegrationTests {
   void managesConversationThroughHttpApi() throws Exception {
     String startBody =
         mockMvc
-            .perform(post("/api/voice-conversations").with(csrf()))
+            .perform(post("/api/voice-conversations"))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.ttlSeconds").value(1_800))
             .andReturn()
@@ -43,7 +40,6 @@ class VoiceConversationApiIntegrationTests {
     mockMvc
         .perform(
             post("/api/voice-conversations/{conversationId}/messages", conversationId)
-                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"content\":\"안녕하세요\"}"))
         .andExpect(status().isOk())
@@ -55,7 +51,7 @@ class VoiceConversationApiIntegrationTests {
         .andExpect(jsonPath("$.messages.length()").value(1));
 
     mockMvc
-        .perform(delete("/api/voice-conversations/{conversationId}", conversationId).with(csrf()))
+        .perform(delete("/api/voice-conversations/{conversationId}", conversationId))
         .andExpect(status().isNoContent());
 
     mockMvc
@@ -67,7 +63,7 @@ class VoiceConversationApiIntegrationTests {
   void rejectsBlankMessage() throws Exception {
     String startBody =
         mockMvc
-            .perform(post("/api/voice-conversations").with(csrf()))
+            .perform(post("/api/voice-conversations"))
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -76,12 +72,10 @@ class VoiceConversationApiIntegrationTests {
     mockMvc
         .perform(
             post("/api/voice-conversations/{conversationId}/messages", conversationId)
-                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"content\":\" \"}"))
         .andExpect(status().isBadRequest());
 
-    mockMvc.perform(
-        delete("/api/voice-conversations/{conversationId}", conversationId).with(csrf()));
+    mockMvc.perform(delete("/api/voice-conversations/{conversationId}", conversationId));
   }
 }
