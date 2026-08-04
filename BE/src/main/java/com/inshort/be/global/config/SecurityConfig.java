@@ -28,7 +28,12 @@ public class SecurityConfig {
                 authorize
                     .requestMatchers(HttpMethod.OPTIONS, "/**")
                     .permitAll()
-                    .requestMatchers(VOICE_CONVERSATION_API, "/error")
+                    .requestMatchers(
+                        VOICE_CONVERSATION_API,
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/error")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
