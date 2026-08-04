@@ -12,16 +12,16 @@ import lombok.*;
 @Builder
 public class User extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, length = 30)
-    private String name;
+  @Column(nullable = false, length = 30)
+  private String name;
 
-    @Column(nullable = false, unique = true, length = 100)
-    private String ci;
+  @Column(nullable = false, unique = true, length = 100)
+  private String ci;
 
-    @Column(nullable = false, unique = true, length = 20)
-    private String phone;
+  @Column(nullable = false, unique = true, length = 20)
+  private String phone;
 }

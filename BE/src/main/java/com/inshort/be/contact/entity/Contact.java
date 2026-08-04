@@ -14,40 +14,29 @@ import lombok.*;
 @Builder
 public class Contact extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    /**
-     * 연락처를 소유한 사용자
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  /** 연락처를 소유한 사용자 */
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    /**
-     * 수취인 은행
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "bank_id", nullable = false)
-    private Bank bank;
+  /** 수취인 은행 */
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "bank_id", nullable = false)
+  private Bank bank;
 
-    /**
-     * AI가 기억할 별명
-     * ex) 엄마, 영희, 회사
-     */
-    @Column(nullable = false, length = 30)
-    private String alias;
+  /** AI가 기억할 별명 ex) 엄마, 영희, 회사 */
+  @Column(nullable = false, length = 30)
+  private String alias;
 
-    /**
-     * 실제 예금주명
-     */
-    @Column(nullable = false, length = 30)
-    private String recipientName;
+  /** 실제 예금주명 */
+  @Column(nullable = false, length = 30)
+  private String recipientName;
 
-    /**
-     * 계좌번호
-     */
-    @Column(name = "account_number", nullable = false, length = 30)
-    private String accountNumber;
+  /** 계좌번호 */
+  @Column(name = "account_number", nullable = false, length = 30)
+  private String accountNumber;
 }
