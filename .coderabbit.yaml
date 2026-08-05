@@ -9,6 +9,6 @@ reviews:
     drafts: true
     base_branches:
       - main
-      - develop
+      - dev
 
 language: ko
