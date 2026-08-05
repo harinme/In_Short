@@ -28,3 +28,13 @@ spring:
       ssl:
         enabled: ${REDIS_SSL_ENABLED:false}
       timeout: 2s
+
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: "*"
+
+    endpoint:
+      health:
+        show-details: always
