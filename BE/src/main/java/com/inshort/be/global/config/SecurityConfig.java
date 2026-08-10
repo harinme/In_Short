@@ -20,7 +20,7 @@ public class SecurityConfig {
   @Bean
   SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     return http.cors(Customizer.withDefaults())
-        .csrf(csrf -> csrf.ignoringRequestMatchers(VOICE_CONVERSATION_API))
+        .csrf(csrf -> csrf.ignoringRequestMatchers(VOICE_CONVERSATION_API,  "/api/ai/test"))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
@@ -31,10 +31,11 @@ public class SecurityConfig {
                     .requestMatchers(
                         VOICE_CONVERSATION_API,
                         "/v3/api-docs/**",
+                        "/api/ai/test",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
                         "/error",
-                        "/actuator/**"   )
+                        "/actuator/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
