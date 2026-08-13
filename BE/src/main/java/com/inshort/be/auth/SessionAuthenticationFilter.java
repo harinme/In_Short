@@ -32,12 +32,11 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
       throws ServletException, IOException {
     if (SecurityContextHolder.getContext().getAuthentication() == null) {
       findSessionId(request)
-          .flatMap(authSessionService::findUserId)
           .ifPresent(
-              userId ->
-                  SecurityContextHolder.getContext()
-                      .setAuthentication(
-                          new UsernamePasswordAuthenticationToken(userId, null, AUTHORITIES)));
+              sessionId ->
+                  authSessionService
+                      .findUserId(sessionId)
+                      .ifPresent(userId -> authenticateAndRefresh(request, sessionId, userId)));
     }
     filterChain.doFilter(request, response);
   }
@@ -51,5 +50,26 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
         .filter(cookie -> AuthSessionService.SESSION_COOKIE_NAME.equals(cookie.getName()))
         .map(Cookie::getValue)
         .findFirst();
+  }
+
+  private void authenticateAndRefresh(HttpServletRequest request, String sessionId, Long userId) {
+    SecurityContextHolder.getContext()
+        .setAuthentication(new UsernamePasswordAuthenticationToken(userId, null, AUTHORITIES));
+
+    if (shouldRefreshSession(request)) {
+      authSessionService.refresh(sessionId);
+    }
+  }
+
+  private boolean shouldRefreshSession(HttpServletRequest request) {
+    String path = request.getRequestURI();
+    return !path.equals("/api/auth/csrf")
+        && !path.equals("/api/auth/login")
+        && !path.equals("/api/auth/logout")
+        && !path.startsWith("/api/voice-conversations")
+        && !path.equals("/api/ai/test")
+        && !path.startsWith("/actuator")
+        && !path.startsWith("/swagger-ui")
+        && !path.startsWith("/v3/api-docs");
   }
 }

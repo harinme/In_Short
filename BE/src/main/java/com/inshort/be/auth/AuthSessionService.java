@@ -48,6 +48,11 @@ public class AuthSessionService {
     redisTemplate.delete(key(sessionId));
   }
 
+  /** 인증된 사용자의 활동 시점부터 세션 만료 시간을 다시 계산한다. */
+  public boolean refresh(String sessionId) {
+    return Boolean.TRUE.equals(redisTemplate.expire(key(sessionId), sessionTimeout));
+  }
+
   public Optional<Instant> expiresAt(String sessionId) {
     Long remainingSeconds = redisTemplate.getExpire(key(sessionId), TimeUnit.SECONDS);
     if (remainingSeconds == null || remainingSeconds <= 0) {
