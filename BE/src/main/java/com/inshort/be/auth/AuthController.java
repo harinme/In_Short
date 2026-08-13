@@ -2,6 +2,7 @@ package com.inshort.be.auth;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,22 +30,30 @@ public class AuthController {
 
   private final AuthService authService;
   private final AuthSessionService authSessionService;
+  private final CsrfTokenRepository csrfTokenRepository;
   private final boolean secureCookie;
   private final Duration sessionTimeout;
 
   public AuthController(
       AuthService authService,
       AuthSessionService authSessionService,
+      CsrfTokenRepository csrfTokenRepository,
       @Value("${app.auth.cookie-secure:false}") boolean secureCookie,
       @Value("${app.auth.session-timeout:10m}") Duration sessionTimeout) {
     this.authService = authService;
     this.authSessionService = authSessionService;
+    this.csrfTokenRepository = csrfTokenRepository;
     this.secureCookie = secureCookie;
     this.sessionTimeout = sessionTimeout;
   }
 
   @GetMapping("/csrf")
-  public CsrfResponse csrf(CsrfToken csrfToken) {
+  public CsrfResponse csrf(HttpServletRequest request, HttpServletResponse response) {
+    CsrfToken csrfToken = csrfTokenRepository.loadToken(request);
+    if (csrfToken == null) {
+      csrfToken = csrfTokenRepository.generateToken(request);
+      csrfTokenRepository.saveToken(csrfToken, request, response);
+    }
     return new CsrfResponse(csrfToken.getHeaderName(), csrfToken.getToken());
   }
 

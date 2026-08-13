@@ -12,9 +12,10 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -30,11 +31,14 @@ public class SecurityConfig {
   }
 
   @Bean
-  SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+  SecurityFilterChain securityFilterChain(
+      HttpSecurity http, CookieCsrfTokenRepository csrfTokenRepository) throws Exception {
     return http.cors(Customizer.withDefaults())
         .csrf(
             csrf ->
-                csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                csrf
+                    .csrfTokenRepository(csrfTokenRepository)
+                    .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                     .ignoringRequestMatchers(VOICE_CONVERSATION_API, "/api/ai/test"))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -61,10 +65,15 @@ public class SecurityConfig {
                 exceptions.authenticationEntryPoint(
                     (request, response, exception) ->
                         response.sendError(HttpServletResponse.SC_UNAUTHORIZED)))
-        .addFilterBefore(sessionAuthenticationFilter, AuthorizationFilter.class)
+        .addFilterBefore(sessionAuthenticationFilter, AnonymousAuthenticationFilter.class)
         .httpBasic(AbstractHttpConfigurer::disable)
         .formLogin(AbstractHttpConfigurer::disable)
         .build();
+  }
+
+  @Bean
+  CookieCsrfTokenRepository csrfTokenRepository() {
+    return CookieCsrfTokenRepository.withHttpOnlyFalse();
   }
 
   @Bean
