@@ -24,4 +24,8 @@ public class User extends BaseEntity {
 
   @Column(nullable = false, unique = true, length = 20)
   private String phone;
+
+  /** BCrypt로 해시한 6자리 간편 비밀번호. 평문 PIN은 저장하지 않는다. */
+  @Column(name = "pin_hash", nullable = false, length = 60)
+  private String pinHash;
 }

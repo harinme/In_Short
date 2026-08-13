@@ -1,13 +1,20 @@
 package com.inshort.be.global.config;
 
+import com.inshort.be.auth.SessionAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -16,11 +23,19 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   private static final String VOICE_CONVERSATION_API = "/api/voice-conversations/**";
+  private final SessionAuthenticationFilter sessionAuthenticationFilter;
+
+  public SecurityConfig(SessionAuthenticationFilter sessionAuthenticationFilter) {
+    this.sessionAuthenticationFilter = sessionAuthenticationFilter;
+  }
 
   @Bean
   SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     return http.cors(Customizer.withDefaults())
-        .csrf(csrf -> csrf.ignoringRequestMatchers(VOICE_CONVERSATION_API,  "/api/ai/test"))
+        .csrf(
+            csrf ->
+                csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                    .ignoringRequestMatchers(VOICE_CONVERSATION_API, "/api/ai/test"))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
@@ -30,6 +45,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(
                         VOICE_CONVERSATION_API,
+                        "/api/auth/csrf",
+                        "/api/auth/login",
                         "/v3/api-docs/**",
                         "/api/ai/test",
                         "/swagger-ui/**",
@@ -39,8 +56,20 @@ public class SecurityConfig {
                     .permitAll()
                     .anyRequest()
                     .authenticated())
-        .httpBasic(Customizer.withDefaults())
+        .exceptionHandling(
+            exceptions ->
+                exceptions.authenticationEntryPoint(
+                    (request, response, exception) ->
+                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED)))
+        .addFilterBefore(sessionAuthenticationFilter, AuthorizationFilter.class)
+        .httpBasic(AbstractHttpConfigurer::disable)
+        .formLogin(AbstractHttpConfigurer::disable)
         .build();
+  }
+
+  @Bean
+  PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
   }
 
   @Bean
@@ -48,7 +77,8 @@ public class SecurityConfig {
     CorsConfiguration configuration = new CorsConfiguration();
     configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
     configuration.setAllowedMethods(List.of("GET", "POST", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(List.of("Content-Type", "Authorization"));
+    configuration.setAllowedHeaders(List.of("Content-Type", "Authorization", "X-XSRF-TOKEN"));
+    configuration.setAllowCredentials(true);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/api/**", configuration);

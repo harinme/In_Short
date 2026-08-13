@@ -51,5 +51,8 @@ openai:
   api-key: ${OPENAI_API_KEY:dummy-key}
 
 app:
+  auth:
+    session-timeout: ${AUTH_SESSION_TIMEOUT:10m}
+    cookie-secure: ${AUTH_COOKIE_SECURE:false}
   ai:
     model: ${OPENAI_MODEL:gpt-5.4-mini}
