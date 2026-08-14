@@ -3,6 +3,7 @@ package com.inshort.be.global.config;
 import com.inshort.be.auth.SessionAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -12,8 +13,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
@@ -31,13 +32,20 @@ public class SecurityConfig {
   }
 
   @Bean
+  FilterRegistrationBean<SessionAuthenticationFilter> sessionAuthenticationFilterRegistration() {
+    FilterRegistrationBean<SessionAuthenticationFilter> registration = new FilterRegistrationBean<>();
+    registration.setFilter(sessionAuthenticationFilter);
+    registration.setEnabled(false);
+    return registration;
+  }
+
+  @Bean
   SecurityFilterChain securityFilterChain(
       HttpSecurity http, CookieCsrfTokenRepository csrfTokenRepository) throws Exception {
     return http.cors(Customizer.withDefaults())
         .csrf(
             csrf ->
-                csrf
-                    .csrfTokenRepository(csrfTokenRepository)
+                csrf.csrfTokenRepository(csrfTokenRepository)
                     .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                     .ignoringRequestMatchers(VOICE_CONVERSATION_API, "/api/ai/test"))
         .sessionManagement(

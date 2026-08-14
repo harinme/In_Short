@@ -10,6 +10,9 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class AuthService {
 
+  private static final String DUMMY_PIN_HASH =
+      "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final AuthSessionService authSessionService;
@@ -24,11 +27,13 @@ public class AuthService {
   }
 
   public LoginResult login(String phone, String pin) {
-    User user =
-        userRepository
-            .findByPhone(phone)
-            .filter(candidate -> passwordEncoder.matches(pin, candidate.getPinHash()))
-            .orElseThrow(this::invalidCredentials);
+    User user = userRepository.findByPhone(phone).orElse(null);
+    String pinHash = user == null ? DUMMY_PIN_HASH : user.getPinHash();
+    boolean pinMatches = passwordEncoder.matches(pin, pinHash);
+
+    if (user == null || !pinMatches) {
+      throw invalidCredentials();
+    }
 
     AuthSessionService.Session session = authSessionService.create(user.getId());
     return new LoginResult(user, session);

@@ -38,7 +38,7 @@ public class AuthController {
       AuthService authService,
       AuthSessionService authSessionService,
       CsrfTokenRepository csrfTokenRepository,
-      @Value("${app.auth.cookie-secure:false}") boolean secureCookie,
+      @Value("${app.auth.cookie-secure:true}") boolean secureCookie,
       @Value("${app.auth.session-timeout:10m}") Duration sessionTimeout) {
     this.authService = authService;
     this.authSessionService = authSessionService;
