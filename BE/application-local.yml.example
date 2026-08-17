@@ -23,3 +23,7 @@ spring:
       ssl:
         enabled: ${REDIS_SSL_ENABLED:false}
       timeout: 2s
+
+app:
+  auth:
+    cookie-secure: false

@@ -8,3 +8,5 @@ Thumbs.db
 
 # Local environment
 .env
+.vscode/
+.gradle-user-home
