@@ -24,7 +24,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public class SecurityConfig {
 
-  private static final String VOICE_CONVERSATION_API = "/api/voice-conversations/**";
   private final SessionAuthenticationFilter sessionAuthenticationFilter;
 
   public SecurityConfig(SessionAuthenticationFilter sessionAuthenticationFilter) {
@@ -47,8 +46,7 @@ public class SecurityConfig {
         .csrf(
             csrf ->
                 csrf.csrfTokenRepository(csrfTokenRepository)
-                    .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                    .ignoringRequestMatchers(VOICE_CONVERSATION_API, "/api/ai/test"))
+                    .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
@@ -57,16 +55,7 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.OPTIONS, "/**")
                     .permitAll()
                     .requestMatchers(
-                        VOICE_CONVERSATION_API,
-                        "/api/auth/csrf",
-                        "/api/auth/login",
-                        "/api/auth/phone/check",
-                        "/v3/api-docs/**",
-                        "/api/ai/test",
-                        "/swagger-ui/**",
-                        "/swagger-ui.html",
-                        "/error",
-                        "/actuator/**")
+                        "/api/auth/csrf", "/api/auth/login", "/api/auth/phone/check", "/error")
                     .permitAll()
                     .anyRequest()
                     .authenticated())

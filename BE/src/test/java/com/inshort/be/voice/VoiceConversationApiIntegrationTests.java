@@ -1,5 +1,7 @@
 package com.inshort.be.voice;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -28,7 +30,7 @@ class VoiceConversationApiIntegrationTests {
   void managesConversationThroughHttpApi() throws Exception {
     String startBody =
         mockMvc
-            .perform(post("/api/voice-conversations"))
+            .perform(post("/api/voice-conversations").with(user("test-user")).with(csrf()))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.ttlSeconds").value(1_800))
             .andReturn()
@@ -40,22 +42,31 @@ class VoiceConversationApiIntegrationTests {
     mockMvc
         .perform(
             post("/api/voice-conversations/{conversationId}/messages", conversationId)
+                .with(user("test-user"))
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"content\":\"안녕하세요\"}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.messages[0].content").value("안녕하세요"));
 
     mockMvc
-        .perform(get("/api/voice-conversations/{conversationId}", conversationId))
+        .perform(
+            get("/api/voice-conversations/{conversationId}", conversationId)
+                .with(user("test-user")))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.messages.length()").value(1));
 
     mockMvc
-        .perform(delete("/api/voice-conversations/{conversationId}", conversationId))
+        .perform(
+            delete("/api/voice-conversations/{conversationId}", conversationId)
+                .with(user("test-user"))
+                .with(csrf()))
         .andExpect(status().isNoContent());
 
     mockMvc
-        .perform(get("/api/voice-conversations/{conversationId}", conversationId))
+        .perform(
+            get("/api/voice-conversations/{conversationId}", conversationId)
+                .with(user("test-user")))
         .andExpect(status().isNotFound());
   }
 
@@ -63,7 +74,7 @@ class VoiceConversationApiIntegrationTests {
   void rejectsBlankMessage() throws Exception {
     String startBody =
         mockMvc
-            .perform(post("/api/voice-conversations"))
+            .perform(post("/api/voice-conversations").with(user("test-user")).with(csrf()))
             .andReturn()
             .getResponse()
             .getContentAsString();
@@ -72,10 +83,15 @@ class VoiceConversationApiIntegrationTests {
     mockMvc
         .perform(
             post("/api/voice-conversations/{conversationId}/messages", conversationId)
+                .with(user("test-user"))
+                .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"content\":\" \"}"))
         .andExpect(status().isBadRequest());
 
-    mockMvc.perform(delete("/api/voice-conversations/{conversationId}", conversationId));
+    mockMvc.perform(
+        delete("/api/voice-conversations/{conversationId}", conversationId)
+            .with(user("test-user"))
+            .with(csrf()));
   }
 }

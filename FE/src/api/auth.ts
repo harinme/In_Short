@@ -6,7 +6,7 @@ async function readError(response: Response) {
   return body?.detail || body?.message || `요청 처리에 실패했습니다. (${response.status})`
 }
 
-async function csrfHeaders() {
+export async function csrfHeaders() {
   const response = await fetch('/api/auth/csrf')
   if (!response.ok) throw new Error(await readError(response))
   const csrf = await response.json() as CsrfResponse
