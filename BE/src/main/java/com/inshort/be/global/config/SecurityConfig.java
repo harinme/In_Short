@@ -47,6 +47,9 @@ public class SecurityConfig {
             csrf ->
                 csrf.csrfTokenRepository(csrfTokenRepository)
                     .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
+                    .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                    .ignoringRequestMatchers(
+                        VOICE_CONVERSATION_API, "/api/ai/test", "/api/ai/intent"))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
@@ -54,7 +57,23 @@ public class SecurityConfig {
                 authorize
                     .requestMatchers(HttpMethod.OPTIONS, "/**")
                     .permitAll()
+<<<<<<< HEAD
                     .requestMatchers("/api/auth/csrf", "/api/auth/login", "/error")
+=======
+                    .requestMatchers(
+                        "/api/auth/csrf", "/api/auth/login", "/api/auth/phone/check", "/error")
+                        VOICE_CONVERSATION_API,
+                        "/api/auth/csrf",
+                        "/api/auth/login",
+                        "/v3/api-docs/**",
+                        "/api/ai/test",
+                        "/api/ai/intent",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/stt-test.html",
+                        "/error",
+                        "/actuator/**")
+>>>>>>> f897c43c8cf5c672396a8693bb9dc43aa2a666a9
                     .permitAll()
                     .anyRequest()
                     .authenticated())

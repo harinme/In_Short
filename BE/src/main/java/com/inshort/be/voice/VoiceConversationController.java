@@ -1,5 +1,7 @@
 package com.inshort.be.voice;
 
+import com.inshort.be.voice.stt.TranscriptionResponse;
+import com.inshort.be.voice.stt.VoiceTranscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -19,7 +21,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/voice-conversations")
@@ -27,9 +31,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class VoiceConversationController {
 
   private final VoiceConversationService conversationService;
+  private final VoiceTranscriptionService transcriptionService;
 
-  public VoiceConversationController(VoiceConversationService conversationService) {
+  public VoiceConversationController(
+      VoiceConversationService conversationService,
+      VoiceTranscriptionService transcriptionService) {
     this.conversationService = conversationService;
+    this.transcriptionService = transcriptionService;
   }
 
   @PostMapping
@@ -56,6 +64,25 @@ public class VoiceConversationController {
       @Parameter(description = "대화 UUID", required = true) @PathVariable UUID conversationId,
       @Valid @RequestBody MessageRequest request) {
     return conversationService.appendMessage(conversationId, request.content());
+  }
+
+  @PostMapping(value = "/{conversationId}/transcriptions", consumes = "multipart/form-data")
+  @Operation(summary = "음성 문장 변환", description = "음성을 한국어 텍스트로 변환하고 Redis 대화에 저장합니다.")
+  @ApiResponses({
+    @ApiResponse(responseCode = "200", description = "변환 및 저장 성공"),
+    @ApiResponse(responseCode = "400", description = "음성 파일 검증 실패"),
+    @ApiResponse(responseCode = "404", description = "대화가 없거나 만료됨"),
+    @ApiResponse(responseCode = "409", description = "동일 요청 처리 중"),
+    @ApiResponse(responseCode = "413", description = "음성 파일 크기 초과"),
+    @ApiResponse(responseCode = "415", description = "지원하지 않는 음성 형식"),
+    @ApiResponse(responseCode = "422", description = "인식된 음성이 없음"),
+    @ApiResponse(responseCode = "502", description = "외부 STT 호출 실패")
+  })
+  public TranscriptionResponse transcribe(
+      @PathVariable UUID conversationId,
+      @RequestParam UUID requestId,
+      @RequestParam MultipartFile audio) {
+    return transcriptionService.transcribe(conversationId, requestId, audio);
   }
 
   @GetMapping("/{conversationId}")

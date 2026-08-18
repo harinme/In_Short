@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>STT 마이크 테스트</title>
+    <style>
+      :root {
+        color: #172033;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f4f7fb;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+      }
+
+      main {
+        width: min(680px, calc(100% - 32px));
+        padding: 32px;
+        box-sizing: border-box;
+        border-radius: 24px;
+        background: white;
+        box-shadow: 0 16px 50px rgb(31 47 75 / 12%);
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 24px;
+      }
+
+      .description {
+        margin: 0 0 28px;
+        color: #657188;
+      }
+
+      .state {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 18px;
+        border-radius: 16px;
+        background: #f2f6ff;
+      }
+
+      .indicator {
+        width: 16px;
+        height: 16px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        background: #8190aa;
+      }
+
+      .indicator.listening {
+        background: #276ef1;
+        box-shadow: 0 0 0 8px rgb(39 110 241 / 12%);
+        animation: pulse 1.2s infinite;
+      }
+
+      .indicator.speaking {
+        background: #14a673;
+        box-shadow: 0 0 0 8px rgb(20 166 115 / 12%);
+      }
+
+      .indicator.processing {
+        background: #f09a24;
+        animation: pulse 0.8s infinite;
+      }
+
+      #status {
+        font-weight: 700;
+      }
+
+      #detail {
+        margin-top: 3px;
+        color: #657188;
+        font-size: 14px;
+      }
+
+      .history {
+        margin-top: 24px;
+      }
+
+      .history h2 {
+        font-size: 16px;
+      }
+
+      #messages {
+        min-height: 100px;
+        max-height: 280px;
+        overflow: auto;
+        padding: 16px;
+        border: 1px solid #e5eaf2;
+        border-radius: 14px;
+      }
+
+      .message {
+        margin: 0 0 12px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: #f6f8fb;
+      }
+
+      .message:last-child {
+        margin-bottom: 0;
+      }
+
+      .empty {
+        color: #8a95a8;
+      }
+
+      #startButton {
+        width: 100%;
+        margin-top: 18px;
+        padding: 13px 16px;
+        border: 0;
+        border-radius: 12px;
+        color: white;
+        background: #276ef1;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      #startButton[hidden] {
+        display: none;
+      }
+
+      @keyframes pulse {
+        50% {
+          opacity: 0.45;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>STT 마이크 테스트</h1>
+      <p class="description">말을 시작하고 잠시 멈추면 문장 단위로 자동 전송합니다.</p>
+
+      <section class="state" aria-live="polite">
+        <span id="indicator" class="indicator"></span>
+        <div>
+          <div id="status">준비 중</div>
+          <div id="detail">마이크와 대화 세션을 준비하고 있습니다.</div>
+        </div>
+      </section>
+
+      <button id="startButton" type="button">대화 시작</button>
+
+      <section class="history">
+        <h2>인식된 문장</h2>
+        <div id="messages"><span class="empty">아직 인식된 문장이 없습니다.</span></div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.wasm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.29/dist/bundle.min.js"></script>
+    <script>
+
+      const indicator = document.querySelector("#indicator");
+      const statusElement = document.querySelector("#status");
+      const detailElement = document.querySelector("#detail");
+      const messagesElement = document.querySelector("#messages");
+      const startButton = document.querySelector("#startButton");
+
+      let conversationId;
+      let microphoneVad;
+      let processing = false;
+      let initialized = false;
+
+      function setState(state, status, detail) {
+        indicator.className = `indicator ${state}`;
+        statusElement.textContent = status;
+        detailElement.textContent = detail;
+      }
+
+      async function initialize() {
+        if (initialized) return;
+        initialized = true;
+        startButton.hidden = true;
+
+        try {
+          const sessionResponse = await fetch("/api/voice-conversations", { method: "POST" });
+          if (!sessionResponse.ok) throw new Error(`대화 생성 실패 (${sessionResponse.status})`);
+          conversationId = (await sessionResponse.json()).conversationId;
+
+          await speakGreeting();
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          setState("", "음성 감지 모델을 준비하고 있습니다", "마이크 권한 요청이 표시되면 허용해 주세요.");
+          microphoneVad = await vad.MicVAD.new({
+            model: "v5",
+            baseAssetPath:
+              "https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.29/dist/",
+            onnxWASMBasePath:
+              "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/",
+            positiveSpeechThreshold: 0.82,
+            negativeSpeechThreshold: 0.48,
+            redemptionFrames: 12,
+            minSpeechFrames: 8,
+            preSpeechPadFrames: 4,
+            onSpeechStart: () => {
+              if (!processing) {
+                setState("speaking", "말씀을 듣는 중입니다", "말을 마치면 자동으로 전송합니다.");
+              }
+            },
+            onSpeechEnd: async (audio) => {
+              if (!processing) await sendAudio(float32ToWav(audio), "audio/wav");
+            },
+            onVADMisfire: () => {
+              if (!processing) {
+                setState("listening", "듣고 있습니다", "짧은 주변 소음은 무시했습니다.");
+              }
+            },
+          });
+          microphoneVad.start();
+          setState("listening", "듣고 있습니다", "말씀해 주세요.");
+        } catch (error) {
+          initialized = false;
+          setState("", "자동 시작이 차단되었습니다", error.message);
+          startButton.hidden = false;
+        }
+      }
+
+      function speakGreeting() {
+        return new Promise((resolve) => {
+          const utterance = new SpeechSynthesisUtterance("안녕하세요 오늘은 무엇을 도와드릴까요?");
+          utterance.lang = "ko-KR";
+          utterance.rate = 1;
+          utterance.onend = resolve;
+          utterance.onerror = resolve;
+          speechSynthesis.cancel();
+          speechSynthesis.speak(utterance);
+          setTimeout(resolve, 5000);
+        });
+      }
+
+      function float32ToWav(audio) {
+        const buffer = new ArrayBuffer(44 + audio.length * 2);
+        const view = new DataView(buffer);
+        const writeText = (offset, text) => {
+          for (let index = 0; index < text.length; index += 1) {
+            view.setUint8(offset + index, text.charCodeAt(index));
+          }
+        };
+
+        writeText(0, "RIFF");
+        view.setUint32(4, 36 + audio.length * 2, true);
+        writeText(8, "WAVE");
+        writeText(12, "fmt ");
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, 16000, true);
+        view.setUint32(28, 32000, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeText(36, "data");
+        view.setUint32(40, audio.length * 2, true);
+
+        for (let index = 0; index < audio.length; index += 1) {
+          const sample = Math.max(-1, Math.min(1, audio[index]));
+          view.setInt16(44 + index * 2, sample < 0 ? sample * 32768 : sample * 32767, true);
+        }
+        return new Blob([buffer], { type: "audio/wav" });
+      }
+
+      async function sendAudio(blob, type) {
+        processing = true;
+        setState("processing", "음성을 인식하고 있습니다", "Groq STT 결과를 기다리고 있습니다.");
+
+        try {
+          const extension = type.includes("wav") ? "wav" : "webm";
+          const formData = new FormData();
+          formData.append("requestId", crypto.randomUUID());
+          formData.append("audio", blob, `speech.${extension}`);
+
+          const response = await fetch(
+            `/api/voice-conversations/${conversationId}/transcriptions`,
+            { method: "POST", body: formData },
+          );
+          const body = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(body.detail || body.message || `STT 실패 (${response.status})`);
+
+          appendMessage(body.transcript);
+          setState("listening", "듣고 있습니다", "다음 문장을 말씀해 주세요.");
+        } catch (error) {
+          setState("listening", "인식에 실패했습니다", `${error.message} 다시 말씀해 주세요.`);
+        } finally {
+          processing = false;
+        }
+      }
+
+      function appendMessage(text) {
+        messagesElement.querySelector(".empty")?.remove();
+        const message = document.createElement("p");
+        message.className = "message";
+        message.textContent = text;
+        messagesElement.append(message);
+        messagesElement.scrollTop = messagesElement.scrollHeight;
+      }
+
+      startButton.addEventListener("click", initialize);
+    </script>
+  </body>
+</html>
