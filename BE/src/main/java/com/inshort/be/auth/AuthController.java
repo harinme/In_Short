@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import java.time.Duration;
 import java.time.Instant;
 import org.springframework.beans.factory.annotation.Value;
@@ -112,7 +111,11 @@ public class AuthController {
   }
 
   public record LoginRequest(
-      @NotBlank @Size(max = 20) String phone,
+      @NotBlank
+          @Pattern(
+              regexp = "010\\d{8}",
+              message = "Phone number must start with 010 and contain 11 digits")
+          String phone,
       @NotBlank @Pattern(regexp = "\\d{6}", message = "PIN must be six digits") String pin) {}
 
   public record LoginResponse(Long userId, String name, Instant expiresAt) {
