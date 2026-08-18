@@ -24,6 +24,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public class SecurityConfig {
 
+  private static final String VOICE_CONVERSATION_API = "/api/voice-conversations/**";
+
   private final SessionAuthenticationFilter sessionAuthenticationFilter;
 
   public SecurityConfig(SessionAuthenticationFilter sessionAuthenticationFilter) {
@@ -46,7 +48,6 @@ public class SecurityConfig {
         .csrf(
             csrf ->
                 csrf.csrfTokenRepository(csrfTokenRepository)
-                    .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
                     .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                     .ignoringRequestMatchers(
                         VOICE_CONVERSATION_API, "/api/ai/test", "/api/ai/intent"))
@@ -57,14 +58,11 @@ public class SecurityConfig {
                 authorize
                     .requestMatchers(HttpMethod.OPTIONS, "/**")
                     .permitAll()
-<<<<<<< HEAD
-                    .requestMatchers("/api/auth/csrf", "/api/auth/login", "/error")
-=======
                     .requestMatchers(
-                        "/api/auth/csrf", "/api/auth/login", "/api/auth/phone/check", "/error")
                         VOICE_CONVERSATION_API,
                         "/api/auth/csrf",
                         "/api/auth/login",
+                        "/api/auth/phone/check",
                         "/v3/api-docs/**",
                         "/api/ai/test",
                         "/api/ai/intent",
@@ -73,7 +71,6 @@ public class SecurityConfig {
                         "/stt-test.html",
                         "/error",
                         "/actuator/**")
->>>>>>> f897c43c8cf5c672396a8693bb9dc43aa2a666a9
                     .permitAll()
                     .anyRequest()
                     .authenticated())
