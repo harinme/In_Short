@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { checkPhone } from '../api/auth'
 import { useAuth } from '../auth-context'
 import { AppShell } from '../components/AppShell'
 import { CharacterImage } from '../components/CharacterImage'
@@ -41,22 +40,6 @@ export function LoginPage() {
   const [pin, setPin] = useState('')
   const [pending, setPending] = useState(false)
 
-  const verifyPhone = async (nextPhone: string) => {
-    setPending(true)
-    try {
-      const result = await checkPhone(nextPhone)
-      if (!result.exists) {
-        setPhone(PHONE_PREFIX)
-        toast.error('등록된 전화번호가 없어요.')
-        return
-      }
-      setStep('pin')
-      toast.success('전화번호를 확인했어요.')
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : '전화번호를 확인하지 못했어요.')
-    } finally { setPending(false) }
-  }
-
   const submitLogin = async (nextPin: string) => {
     setPending(true)
     try {
@@ -65,7 +48,7 @@ export function LoginPage() {
       navigate('/', { replace: true })
     } catch {
       setPin('')
-      toast.error('비밀번호가 맞지 않아요. 다시 입력해 주세요.')
+      toast.error('전화번호 또는 비밀번호를 확인해 주세요.')
     } finally { setPending(false) }
   }
 
@@ -75,7 +58,7 @@ export function LoginPage() {
       if (phone.length >= PHONE_LENGTH) return
       const nextPhone = phone + digit
       setPhone(nextPhone)
-      if (nextPhone.length === PHONE_LENGTH) void verifyPhone(nextPhone)
+      if (nextPhone.length === PHONE_LENGTH) setStep('pin')
       return
     }
     if (pin.length >= PIN_LENGTH) return

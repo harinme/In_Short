@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import java.time.Duration;
 import java.time.Instant;
 import org.springframework.beans.factory.annotation.Value;
@@ -68,11 +67,6 @@ public class AuthController {
                 result.user().getId(), result.user().getName(), result.session().expiresAt()));
   }
 
-  @PostMapping("/phone/check")
-  public PhoneCheckResponse checkPhone(@Valid @RequestBody PhoneCheckRequest request) {
-    return new PhoneCheckResponse(authService.phoneExists(request.phone()));
-  }
-
   @PostMapping("/logout")
   public ResponseEntity<Void> logout(HttpServletRequest request) {
     findSessionId(request).ifPresent(authSessionService::delete);
@@ -117,15 +111,12 @@ public class AuthController {
   }
 
   public record LoginRequest(
-      @NotBlank @Size(max = 20) String phone,
-      @NotBlank @Pattern(regexp = "\\d{6}", message = "PIN must be six digits") String pin) {}
-
-  public record PhoneCheckRequest(
       @NotBlank
-          @Pattern(regexp = "01\\d{8,9}", message = "Phone number must contain 10 or 11 digits")
-          String phone) {}
-
-  public record PhoneCheckResponse(boolean exists) {}
+          @Pattern(
+              regexp = "010\\d{8}",
+              message = "Phone number must start with 010 and contain 11 digits")
+          String phone,
+      @NotBlank @Pattern(regexp = "\\d{6}", message = "PIN must be six digits") String pin) {}
 
   public record LoginResponse(Long userId, String name, Instant expiresAt) {
     static LoginResponse from(Long userId, String name, Instant expiresAt) {

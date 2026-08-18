@@ -89,9 +89,11 @@ class VoiceConversationApiIntegrationTests {
                 .content("{\"content\":\" \"}"))
         .andExpect(status().isBadRequest());
 
-    mockMvc.perform(
-        delete("/api/voice-conversations/{conversationId}", conversationId)
-            .with(user("test-user"))
-            .with(csrf()));
+    mockMvc
+        .perform(
+            delete("/api/voice-conversations/{conversationId}", conversationId)
+                .with(user("test-user"))
+                .with(csrf()))
+        .andExpect(status().isNoContent());
   }
 }

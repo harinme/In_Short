@@ -54,8 +54,7 @@ public class SecurityConfig {
                 authorize
                     .requestMatchers(HttpMethod.OPTIONS, "/**")
                     .permitAll()
-                    .requestMatchers(
-                        "/api/auth/csrf", "/api/auth/login", "/api/auth/phone/check", "/error")
+                    .requestMatchers("/api/auth/csrf", "/api/auth/login", "/error")
                     .permitAll()
                     .anyRequest()
                     .authenticated())

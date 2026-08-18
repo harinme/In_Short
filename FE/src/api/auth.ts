@@ -13,12 +13,6 @@ export async function csrfHeaders() {
   return { [csrf.headerName]: csrf.token }
 }
 
-export async function checkPhone(phone: string) {
-  const response = await fetch('/api/auth/phone/check', { method: 'POST', headers: { 'Content-Type': 'application/json', ...await csrfHeaders() }, body: JSON.stringify({ phone }) })
-  if (!response.ok) throw new Error(await readError(response))
-  return response.json() as Promise<{ exists: boolean }>
-}
-
 export async function login(phone: string, pin: string) {
   const response = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json', ...await csrfHeaders() }, body: JSON.stringify({ phone, pin }) })
   if (!response.ok) throw new Error(await readError(response))
