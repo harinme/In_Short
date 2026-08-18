@@ -338,6 +338,8 @@ button:focus-visible { outline: 3px solid #f4a641; outline-offset: 3px; }
 .conversation-bubble::after { content: ''; position: absolute; left: 50%; bottom: -10px; width: 20px; height: 20px; border-right: 1px solid rgba(23,59,103,.12); border-bottom: 1px solid rgba(23,59,103,.12); background: white; transform: translateX(-50%) rotate(45deg); }
 .conversation-bubble span { display: block; margin-bottom: 5px; color: var(--navy); font-size: 15px; font-weight: 800; }
 .conversation-bubble strong { display: block; font-size: 20px; line-height: 1.45; letter-spacing: -.025em; }
+.conversation-bubble small { display: block; margin-top: 7px; color: var(--muted); font-size: 13px; font-weight: 700; }
+.conversation-bubble.recording { min-height: 132px; }
 .conversation-bubble.confirming { border-color: rgba(244,166,65,.5); background: #fffdf7; }
 
 .voice-character-wrap { position: relative; flex: 1 1 auto; min-height: 330px; display: grid; place-items: center; }

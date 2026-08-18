@@ -33,7 +33,8 @@ public class SecurityConfig {
 
   @Bean
   FilterRegistrationBean<SessionAuthenticationFilter> sessionAuthenticationFilterRegistration() {
-    FilterRegistrationBean<SessionAuthenticationFilter> registration = new FilterRegistrationBean<>();
+    FilterRegistrationBean<SessionAuthenticationFilter> registration =
+        new FilterRegistrationBean<>();
     registration.setFilter(sessionAuthenticationFilter);
     registration.setEnabled(false);
     return registration;
@@ -47,7 +48,8 @@ public class SecurityConfig {
             csrf ->
                 csrf.csrfTokenRepository(csrfTokenRepository)
                     .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                    .ignoringRequestMatchers(VOICE_CONVERSATION_API, "/api/ai/test"))
+                    .ignoringRequestMatchers(
+                        VOICE_CONVERSATION_API, "/api/ai/test", "/api/ai/intent"))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
@@ -61,8 +63,10 @@ public class SecurityConfig {
                         "/api/auth/login",
                         "/v3/api-docs/**",
                         "/api/ai/test",
+                        "/api/ai/intent",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
+                        "/stt-test.html",
                         "/error",
                         "/actuator/**")
                     .permitAll()
