@@ -37,6 +37,10 @@ public class Account extends BaseEntity {
   @Column(nullable = false, length = 30)
   private String holder;
 
+  /** 사용자가 계좌를 구분하기 위해 지정하는 선택 별칭 */
+  @Column(length = 30)
+  private String alias;
+
   /** 현재 잔액 */
   @Column(nullable = false)
   private Long balance;

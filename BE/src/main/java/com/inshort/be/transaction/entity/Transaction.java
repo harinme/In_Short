@@ -38,6 +38,10 @@ public class Transaction extends BaseEntity {
   @Column(nullable = false)
   private Long amount;
 
+  /** 동일 송금에서 발생한 출금·입금 원장 행을 연결하는 식별값 */
+  @Column(name = "transfer_id", length = 36)
+  private String transferId;
+
   /** 거래 후 잔액 */
   @Column(nullable = false)
   private Long balanceAfter;
