@@ -68,6 +68,11 @@ public class AuthController {
                 result.user().getId(), result.user().getName(), result.session().expiresAt()));
   }
 
+  @PostMapping("/phone/check")
+  public PhoneCheckResponse checkPhone(@Valid @RequestBody PhoneCheckRequest request) {
+    return new PhoneCheckResponse(authService.phoneExists(request.phone()));
+  }
+
   @PostMapping("/logout")
   public ResponseEntity<Void> logout(HttpServletRequest request) {
     findSessionId(request).ifPresent(authSessionService::delete);
@@ -114,6 +119,13 @@ public class AuthController {
   public record LoginRequest(
       @NotBlank @Size(max = 20) String phone,
       @NotBlank @Pattern(regexp = "\\d{6}", message = "PIN must be six digits") String pin) {}
+
+  public record PhoneCheckRequest(
+      @NotBlank
+          @Pattern(regexp = "01\\d{8,9}", message = "Phone number must contain 10 or 11 digits")
+          String phone) {}
+
+  public record PhoneCheckResponse(boolean exists) {}
 
   public record LoginResponse(Long userId, String name, Instant expiresAt) {
     static LoginResponse from(Long userId, String name, Instant expiresAt) {

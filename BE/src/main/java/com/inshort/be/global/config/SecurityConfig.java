@@ -33,7 +33,8 @@ public class SecurityConfig {
 
   @Bean
   FilterRegistrationBean<SessionAuthenticationFilter> sessionAuthenticationFilterRegistration() {
-    FilterRegistrationBean<SessionAuthenticationFilter> registration = new FilterRegistrationBean<>();
+    FilterRegistrationBean<SessionAuthenticationFilter> registration =
+        new FilterRegistrationBean<>();
     registration.setFilter(sessionAuthenticationFilter);
     registration.setEnabled(false);
     return registration;
@@ -59,6 +60,7 @@ public class SecurityConfig {
                         VOICE_CONVERSATION_API,
                         "/api/auth/csrf",
                         "/api/auth/login",
+                        "/api/auth/phone/check",
                         "/v3/api-docs/**",
                         "/api/ai/test",
                         "/swagger-ui/**",

@@ -191,17 +191,27 @@ button:focus-visible { outline: 3px solid #f4a641; outline-offset: 3px; }
 .lock-badge svg { width: 22px; height: 22px; }
 .login-copy h1 { margin: 0; color: var(--text); font-size: 26px; line-height: 1.35; letter-spacing: -.035em; }
 .login-copy p { margin: 9px 0 0; color: var(--muted); font-size: 16px; line-height: 1.55; font-weight: 600; }
+.verified-phone { color: var(--navy); font-size: 17px; }
+.phone-display { min-height: 44px; margin-top: 22px; display: flex; align-items: center; justify-content: center; gap: 5px; color: var(--navy-dark); font-size: 25px; font-weight: 900; }
+.phone-display b { font-weight: 700; }
+.phone-slots { display: inline-flex; gap: 3px; }
+.phone-slots i { width: 27px; height: 38px; display: inline-grid; place-items: center; border: 2px solid #c4d0da; border-radius: 8px; background: white; color: var(--navy-dark); font-size: 21px; font-style: normal; font-variant-numeric: tabular-nums; box-shadow: 0 3px 9px rgba(23,59,103,.06); }
+.phone-slots.masked i { padding-top: 5px; color: var(--navy); }
 .pin-dots { display: flex; gap: 18px; margin-top: 26px; }
 .pin-dots span { width: 18px; height: 18px; border: 2px solid #8fa1b1; border-radius: 50%; background: white; transition: background .15s, transform .15s; }
 .pin-dots span.filled { border-color: var(--navy); background: var(--navy); transform: scale(1.08); }
 .pin-dots.has-error span { border-color: #c74444; }
 .pin-error { min-height: 24px; margin: 10px 0 0; color: #b83232; font-size: 15px; font-weight: 700; }
+.login-status { min-height: 24px; margin: 10px 0 0; color: var(--muted); font-size: 15px; font-weight: 700; }
 .pin-keypad { width: 100%; max-width: 310px; margin-top: 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 17px; }
 .pin-keypad button, .pin-keypad > span { min-height: 61px; }
 .pin-keypad button { display: grid; place-items: center; border: 0; border-radius: 20px; background: rgba(255,255,255,.7); color: var(--navy-dark); font-size: 24px; font-weight: 700; }
 .pin-keypad button:hover { background: white; }
+.pin-keypad button:disabled, .change-phone-button:disabled { cursor: wait; opacity: .55; }
 .pin-keypad svg { width: 27px; height: 27px; }
 .demo-hint { margin: 16px 0 0; color: var(--muted); font-size: 15px; font-weight: 700; }
+.change-phone-button { min-height: 42px; margin-top: 10px; border: 0; background: transparent; color: var(--navy); font-size: 15px; font-weight: 800; text-decoration: underline; text-underline-offset: 4px; }
+.auth-loading { min-height: 100svh; display: grid; place-items: center; background: #edf1f4; color: var(--navy); font-weight: 800; }
 
 .transfer-canvas {
   height: 100dvh;

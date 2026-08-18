@@ -39,6 +39,10 @@ public class AuthService {
     return new LoginResult(user, session);
   }
 
+  public boolean phoneExists(String phone) {
+    return userRepository.existsByPhone(phone);
+  }
+
   public User findUser(Long userId) {
     return userRepository.findById(userId).orElseThrow(this::invalidCredentials);
   }
