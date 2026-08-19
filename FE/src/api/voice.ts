@@ -7,10 +7,32 @@ export type VoiceConversation = {
   ttlSeconds: number
 }
 
+export type VoiceIntent = 'TRANSFER' | 'BALANCE' | 'HISTORY' | 'UNKNOWN'
+export type InterpretationStatus = 'READY' | 'NEEDS_CLARIFICATION' | 'UNSUPPORTED'
+export type NextAction = 'OPEN_TRANSFER' | 'OPEN_ACCOUNTS' | 'OPEN_HISTORY' | 'ASK_FOLLOW_UP' | 'RETRY'
+export type MissingField = 'RECIPIENT' | 'AMOUNT' | 'ACCOUNT' | 'DATE_RANGE'
+
+export type VoiceInterpretation = {
+  conversationId: string
+  requestId: string
+  transcript: string
+  intent: VoiceIntent
+  status: InterpretationStatus
+  nextAction: NextAction
+  slots: {
+    transfer: { recipientName: string | null; amount: number | null } | null
+    balance: { accountHint: string | null } | null
+    history: { accountHint: string | null; fromDate: string | null; toDate: string | null } | null
+  }
+  missingFields: MissingField[]
+  message: string
+}
+
 export type TranscriptionResponse = {
   requestId: string
   transcript: string
   createdAt: string
+  interpretation: VoiceInterpretation
 }
 
 async function readError(response: Response) {
