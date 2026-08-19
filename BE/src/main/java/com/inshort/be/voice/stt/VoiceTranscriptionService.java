@@ -2,6 +2,8 @@ package com.inshort.be.voice.stt;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.inshort.be.ai.VoiceInterpretationService;
+import com.inshort.be.ai.dto.VoiceInterpretationResponse;
 import com.inshort.be.voice.VoiceConversation;
 import com.inshort.be.voice.VoiceConversationService;
 import java.time.Duration;
@@ -33,6 +35,7 @@ public class VoiceTranscriptionService {
           "audio/flac");
 
   private final VoiceConversationService conversationService;
+  private final VoiceInterpretationService interpretationService;
   private final SpeechTranscriptionClient transcriptionClient;
   private final StringRedisTemplate redisTemplate;
   private final ObjectMapper objectMapper;
@@ -40,11 +43,13 @@ public class VoiceTranscriptionService {
 
   public VoiceTranscriptionService(
       VoiceConversationService conversationService,
+      VoiceInterpretationService interpretationService,
       SpeechTranscriptionClient transcriptionClient,
       StringRedisTemplate redisTemplate,
       ObjectMapper objectMapper,
       GroqSttProperties properties) {
     this.conversationService = conversationService;
+    this.interpretationService = interpretationService;
     this.transcriptionClient = transcriptionClient;
     this.redisTemplate = redisTemplate;
     this.objectMapper = objectMapper;
@@ -69,11 +74,15 @@ public class VoiceTranscriptionService {
             HttpStatus.UNPROCESSABLE_ENTITY, "No speech was recognized");
       }
 
+      VoiceInterpretationResponse interpretation =
+          interpretationService.interpret(conversationId, requestId, transcript);
+
       VoiceConversation conversation =
           conversationService.appendMessage(conversationId, transcript);
       VoiceConversation.Message storedMessage = conversation.messages().getLast();
       TranscriptionResponse response =
-          new TranscriptionResponse(requestId, storedMessage.content(), storedMessage.createdAt());
+          new TranscriptionResponse(
+              requestId, storedMessage.content(), storedMessage.createdAt(), interpretation);
       redisTemplate
           .opsForValue()
           .set(key, write(response), Duration.ofSeconds(conversation.ttlSeconds()));

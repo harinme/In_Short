@@ -8,6 +8,13 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.inshort.be.ai.VoiceInterpretationService;
+import com.inshort.be.ai.dto.VoiceInterpretationResponse;
+import com.inshort.be.ai.dto.VoiceSlots;
+import com.inshort.be.ai.dto.VoiceSlots.BalanceSlots;
+import com.inshort.be.ai.enums.InterpretationStatus;
+import com.inshort.be.ai.enums.NextAction;
+import com.inshort.be.conversation.enums.ConversationIntent;
 import com.inshort.be.voice.VoiceConversation;
 import com.inshort.be.voice.VoiceConversationService;
 import java.time.Duration;
@@ -25,6 +32,7 @@ import org.springframework.web.server.ResponseStatusException;
 class VoiceTranscriptionServiceTests {
 
   private VoiceConversationService conversationService;
+  private VoiceInterpretationService interpretationService;
   private SpeechTranscriptionClient transcriptionClient;
   private StringRedisTemplate redisTemplate;
   private ValueOperations<String, String> valueOperations;
@@ -35,6 +43,7 @@ class VoiceTranscriptionServiceTests {
   @SuppressWarnings("unchecked")
   void setUp() {
     conversationService = mock(VoiceConversationService.class);
+    interpretationService = mock(VoiceInterpretationService.class);
     transcriptionClient = mock(SpeechTranscriptionClient.class);
     redisTemplate = mock(StringRedisTemplate.class);
     valueOperations = mock(ValueOperations.class);
@@ -49,7 +58,12 @@ class VoiceTranscriptionServiceTests {
     when(redisTemplate.opsForValue()).thenReturn(valueOperations);
     service =
         new VoiceTranscriptionService(
-            conversationService, transcriptionClient, redisTemplate, objectMapper, properties);
+            conversationService,
+            interpretationService,
+            transcriptionClient,
+            redisTemplate,
+            objectMapper,
+            properties);
   }
 
   @Test
@@ -74,12 +88,27 @@ class VoiceTranscriptionServiceTests {
             Duration.ofMinutes(1)))
         .thenReturn(true);
     when(transcriptionClient.transcribe(audio)).thenReturn("  잔액을 알려줘  ");
+    VoiceInterpretationResponse interpretation =
+        new VoiceInterpretationResponse(
+            conversationId,
+            requestId,
+            "잔액을 알려줘",
+            ConversationIntent.BALANCE,
+            InterpretationStatus.READY,
+            NextAction.OPEN_ACCOUNTS,
+            new VoiceSlots(null, new BalanceSlots(null), null),
+            List.of(),
+            "계좌 잔액을 확인할게요.");
+    when(interpretationService.interpret(conversationId, requestId, "잔액을 알려줘"))
+        .thenReturn(interpretation);
     when(conversationService.appendMessage(conversationId, "잔액을 알려줘")).thenReturn(updated);
 
     TranscriptionResponse response = service.transcribe(conversationId, requestId, audio);
 
     assertThat(response.transcript()).isEqualTo("잔액을 알려줘");
     assertThat(response.createdAt()).isEqualTo(createdAt);
+    assertThat(response.interpretation()).isEqualTo(interpretation);
+    verify(interpretationService).interpret(conversationId, requestId, "잔액을 알려줘");
     verify(conversationService).appendMessage(conversationId, "잔액을 알려줘");
   }
 
@@ -90,7 +119,8 @@ class VoiceTranscriptionServiceTests {
     MockMultipartFile audio =
         new MockMultipartFile("audio", "speech.webm", "audio/webm", new byte[] {1});
     TranscriptionResponse stored =
-        new TranscriptionResponse(requestId, "잔액을 알려줘", Instant.parse("2026-08-10T01:00:00Z"));
+        new TranscriptionResponse(
+            requestId, "잔액을 알려줘", Instant.parse("2026-08-10T01:00:00Z"), null);
     String key = "voice:transcription:" + conversationId + ":" + requestId;
 
     when(valueOperations.setIfAbsent(key, "PROCESSING", Duration.ofMinutes(1))).thenReturn(false);
@@ -100,6 +130,7 @@ class VoiceTranscriptionServiceTests {
 
     assertThat(response).isEqualTo(stored);
     verifyNoInteractions(transcriptionClient);
+    verifyNoInteractions(interpretationService);
   }
 
   @Test
