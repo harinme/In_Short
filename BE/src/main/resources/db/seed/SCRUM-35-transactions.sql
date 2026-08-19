@@ -3,11 +3,18 @@
 START TRANSACTION;
 
 INSERT INTO `transaction`
-    (created_at, updated_at, account_id, counterparty_bank_id, transaction_type,
-     amount, transfer_id, balance_after, counterparty_name, counterparty_account, memo)
+    (created_at, updated_at, account_id, counterparty_bank_id, transaction_type, status,
+     amount, fee, channel, transfer_id, reference_number, balance_after,
+     counterparty_name, counterparty_account, memo)
 SELECT seed.created_at, seed.created_at, account.id, counterparty_bank.id,
-       seed.transaction_type, seed.amount, seed.transfer_id, seed.balance_after,
-       seed.counterparty_name, seed.counterparty_account, seed.memo
+       seed.transaction_type, 'COMPLETED', seed.amount, 0,
+       CASE WHEN seed.counterparty_name IN
+                     ('연금공단', '한마디주식회사', '한마디아파트 관리사무소', '한마디통신')
+            THEN 'AUTO_TRANSFER' ELSE 'MOBILE' END,
+       seed.transfer_id,
+       CONCAT('HM-SEED-', REPLACE(seed.account_number, '-', ''), '-',
+              DATE_FORMAT(seed.created_at, '%Y%m%d%H%i%s'), '-', seed.amount),
+       seed.balance_after, seed.counterparty_name, seed.counterparty_account, seed.memo
 FROM (
     SELECT TIMESTAMP('2026-07-15 10:00:00') AS created_at, '100-01-000001' AS account_number,
            '300' AS counterparty_bank_code, 'WITHDRAW' AS transaction_type, 32000 AS amount,
@@ -27,10 +34,10 @@ FROM (
            '박수진', '300-01-000003', '장보기 정산'
     UNION ALL
     SELECT TIMESTAMP('2026-08-01 09:00:00'), '200-01-000001', '100', 'DEPOSIT', 650000,
-           NULL, 6300000, '연금공단', '100-99-000001', '8월 연금'
+           NULL, 6300000, '연금공단', '100-99-000001', NULL
     UNION ALL
     SELECT TIMESTAMP('2026-08-01 09:10:00'), '100-01-000002', '100', 'DEPOSIT', 3500000,
-           NULL, 4800000, '한마디주식회사', '100-99-000002', '8월 급여'
+           NULL, 4800000, '한마디주식회사', '100-99-000002', NULL
     UNION ALL
     SELECT TIMESTAMP('2026-08-03 11:00:00'), '100-01-000001', '300', 'WITHDRAW', 50000,
            '35000000-0000-0000-0000-000000000003', 2786500,
@@ -49,10 +56,10 @@ FROM (
            '김민수', '100-01-000002', '생활비'
     UNION ALL
     SELECT TIMESTAMP('2026-08-08 08:30:00'), '100-01-000001', '300', 'WITHDRAW', 185000,
-           NULL, 2901500, '한마디아파트 관리사무소', '300-99-000101', '관리비'
+           NULL, 2901500, '한마디아파트 관리사무소', '300-99-000101', NULL
     UNION ALL
     SELECT TIMESTAMP('2026-08-10 08:30:00'), '100-01-000001', '200', 'WITHDRAW', 45000,
-           NULL, 2856500, '한마디통신', '200-99-000201', '통신비'
+           NULL, 2856500, '한마디통신', '200-99-000201', NULL
     UNION ALL
     SELECT TIMESTAMP('2026-08-12 20:00:00'), '100-01-000002', '300', 'WITHDRAW', 180000,
            '35000000-0000-0000-0000-000000000005', 4320000,
@@ -72,7 +79,7 @@ LEFT JOIN `transaction` existing
             seed.transfer_id IS NULL
             AND existing.created_at = seed.created_at
             AND existing.amount = seed.amount
-            AND existing.memo = seed.memo
+            AND existing.memo <=> seed.memo
         )
     )
 WHERE existing.id IS NULL;
