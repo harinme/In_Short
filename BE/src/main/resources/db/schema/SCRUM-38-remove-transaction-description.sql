@@ -2,8 +2,7 @@
 
 UPDATE `transaction`
 SET memo = NULL
-WHERE counterparty_name IN
-      ('연금공단', '한마디주식회사', '한마디아파트 관리사무소', '한마디통신');
+WHERE memo IN ('8월 연금', '8월 급여', '관리비', '통신비');
 
 ALTER TABLE `transaction`
     DROP COLUMN description;
