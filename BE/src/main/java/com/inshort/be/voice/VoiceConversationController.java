@@ -1,5 +1,8 @@
 package com.inshort.be.voice;
 
+import com.inshort.be.ai.VoiceInterpretationService;
+import com.inshort.be.ai.dto.VoiceInterpretationRequest;
+import com.inshort.be.ai.dto.VoiceInterpretationResponse;
 import com.inshort.be.voice.stt.TranscriptionResponse;
 import com.inshort.be.voice.stt.VoiceTranscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,12 +35,15 @@ public class VoiceConversationController {
 
   private final VoiceConversationService conversationService;
   private final VoiceTranscriptionService transcriptionService;
+  private final VoiceInterpretationService interpretationService;
 
   public VoiceConversationController(
       VoiceConversationService conversationService,
-      VoiceTranscriptionService transcriptionService) {
+      VoiceTranscriptionService transcriptionService,
+      VoiceInterpretationService interpretationService) {
     this.conversationService = conversationService;
     this.transcriptionService = transcriptionService;
+    this.interpretationService = interpretationService;
   }
 
   @PostMapping
@@ -67,7 +73,9 @@ public class VoiceConversationController {
   }
 
   @PostMapping(value = "/{conversationId}/transcriptions", consumes = "multipart/form-data")
-  @Operation(summary = "음성 문장 변환", description = "음성을 한국어 텍스트로 변환하고 Redis 대화에 저장합니다.")
+  @Operation(
+      summary = "음성 문장 변환 및 해석",
+      description = "음성을 한국어 텍스트로 변환하고 AI로 은행 업무를 해석한 뒤 Redis 대화에 저장합니다.")
   @ApiResponses({
     @ApiResponse(responseCode = "200", description = "변환 및 저장 성공"),
     @ApiResponse(responseCode = "400", description = "음성 파일 검증 실패"),
@@ -83,6 +91,21 @@ public class VoiceConversationController {
       @RequestParam UUID requestId,
       @RequestParam MultipartFile audio) {
     return transcriptionService.transcribe(conversationId, requestId, audio);
+  }
+
+  @PostMapping("/{conversationId}/interpretations")
+  @Operation(summary = "음성 문장 해석", description = "STT 문장을 은행 업무 의도와 화면 이동에 필요한 값으로 구조화합니다.")
+  @ApiResponses({
+    @ApiResponse(responseCode = "200", description = "문장 해석 성공"),
+    @ApiResponse(responseCode = "400", description = "요청 검증 실패"),
+    @ApiResponse(responseCode = "404", description = "대화가 없거나 만료됨"),
+    @ApiResponse(responseCode = "502", description = "외부 AI 호출 실패")
+  })
+  public VoiceInterpretationResponse interpret(
+      @PathVariable UUID conversationId, @Valid @RequestBody VoiceInterpretationRequest request) {
+    conversationService.find(conversationId);
+    return interpretationService.interpret(
+        conversationId, request.requestId(), request.transcript());
   }
 
   @GetMapping("/{conversationId}")

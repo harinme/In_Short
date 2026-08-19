@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MicVAD } from '@ricky0123/vad-web'
 import { useNavigate } from 'react-router-dom'
-import { classifyVoiceIntent } from '../api/intent'
+import type { VoiceInterpretation } from '../api/voice'
 import { createVoiceConversation, deleteVoiceConversation, transcribeAudio } from '../api/voice'
 import { AppShell } from '../components/AppShell'
 import { CharacterImage } from '../components/CharacterImage'
@@ -73,6 +73,7 @@ export function VoicePage() {
   const navigate = useNavigate()
   const [voiceStep, setVoiceStep] = useState<VoiceStep>('ready')
   const [transcript, setTranscript] = useState('')
+  const [interpretation, setInterpretation] = useState<VoiceInterpretation | null>(null)
   const [speechDetected, setSpeechDetected] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [vadLoading, setVadLoading] = useState(false)
@@ -107,6 +108,7 @@ export function VoicePage() {
       const result = await transcribeAudio(conversationId, blob)
       if (closingRef.current) return
       setTranscript(result.transcript)
+      setInterpretation(result.interpretation)
       setVoiceStep('confirming')
     } catch (error) {
       if (closingRef.current) return
@@ -223,6 +225,7 @@ export function VoicePage() {
     setVadLoading(true)
     setErrorMessage('')
     setTranscript('')
+    setInterpretation(null)
     setSpeechDetected(false)
     speechDetectedRef.current = false
     audioFramesRef.current = []
@@ -263,6 +266,7 @@ export function VoicePage() {
     setVoiceStep('ready')
     setErrorMessage('')
     setTranscript('')
+    setInterpretation(null)
     setSpeechDetected(false)
     speechDetectedRef.current = false
     audioFramesRef.current = []
@@ -271,21 +275,23 @@ export function VoicePage() {
   const continueWithIntent = async () => {
     setVoiceStep('routing')
     try {
-      const { intent } = await classifyVoiceIntent(transcript)
-      if (intent === 'TRANSFER') {
+      if (!interpretation) throw new Error('업무 해석 결과가 없습니다. 다시 말씀해 주세요.')
+
+      if (interpretation.nextAction === 'OPEN_TRANSFER') {
         await speakText('송금 화면으로 이동할게요.')
-        return navigate('/transfer/new')
+        return navigate('/transfer/new', { state: interpretation.slots.transfer })
       }
-      if (intent === 'BALANCE') {
+      if (interpretation.nextAction === 'OPEN_ACCOUNTS') {
         await speakText('내 계좌를 확인해 드릴게요.')
-        return navigate('/accounts')
+        return navigate('/accounts', { state: interpretation.slots.balance })
       }
-      if (intent === 'HISTORY') {
+      if (interpretation.nextAction === 'OPEN_HISTORY') {
         await speakText('거래 내역을 확인해 드릴게요.')
-        return navigate('/accounts')
+        return navigate('/accounts', { state: interpretation.slots.history })
       }
+
       setVoiceStep('responding')
-      await speakText('원하시는 업무를 정확히 확인하지 못했어요. 송금 또는 계좌 확인처럼 다시 말씀해 주세요.')
+      await speakText(interpretation.message)
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '업무를 확인하지 못했습니다.')
       setVoiceStep('error')
