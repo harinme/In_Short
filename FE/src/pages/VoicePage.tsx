@@ -3,6 +3,7 @@ import type { MicVAD } from '@ricky0123/vad-web'
 import { useNavigate } from 'react-router-dom'
 import type { VoiceInterpretation } from '../api/voice'
 import { createVoiceConversation, deleteVoiceConversation, transcribeAudio } from '../api/voice'
+import { classifyVoiceIntent } from '../api/intent'
 import { AppShell } from '../components/AppShell'
 import { CharacterImage } from '../components/CharacterImage'
 import { Icon } from '../components/Icon'
@@ -10,6 +11,26 @@ import mainCharacter from '../assets/main-character.png'
 import questionCharacter from '../assets/question-character.png'
 
 type VoiceStep = 'ready' | 'recording' | 'processing' | 'confirming' | 'routing' | 'responding' | 'error'
+
+async function resolveInterpretation(
+  conversationId: string,
+  result: Awaited<ReturnType<typeof transcribeAudio>>,
+): Promise<VoiceInterpretation> {
+  if (result.interpretation) return result.interpretation
+  const { intent } = await classifyVoiceIntent(result.transcript)
+  const nextAction = intent === 'TRANSFER' ? 'OPEN_TRANSFER' : intent === 'BALANCE' ? 'OPEN_ACCOUNTS' : intent === 'HISTORY' ? 'OPEN_HISTORY' : 'RETRY'
+  return {
+    conversationId,
+    requestId: result.requestId,
+    transcript: result.transcript,
+    intent,
+    status: intent === 'UNKNOWN' ? 'UNSUPPORTED' : 'READY',
+    nextAction,
+    slots: { transfer: null, balance: null, history: null },
+    missingFields: [],
+    message: intent === 'UNKNOWN' ? '요청하신 업무를 확인하지 못했어요.' : '요청하신 화면으로 이동할게요.',
+  }
+}
 
 function float32ToWav(audio: Float32Array) {
   const buffer = new ArrayBuffer(44 + audio.length * 2)
@@ -107,8 +128,10 @@ export function VoicePage() {
       const conversationId = await ensureConversation()
       const result = await transcribeAudio(conversationId, blob)
       if (closingRef.current) return
+      const resolvedInterpretation = await resolveInterpretation(conversationId, result)
+      if (closingRef.current) return
       setTranscript(result.transcript)
-      setInterpretation(result.interpretation)
+      setInterpretation(resolvedInterpretation)
       setVoiceStep('confirming')
     } catch (error) {
       if (closingRef.current) return
