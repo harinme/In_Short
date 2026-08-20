@@ -1,17 +1,35 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { getAccounts, type Account } from '../api/accounts'
 import { AppShell } from '../components/AppShell'
 import { Icon } from '../components/Icon'
 
 export function AccountsPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const voiceBalance = (location.state as { voiceBalance?: { accountHint: string | null } | null } | null)?.voiceBalance
+  const accountHint = voiceBalance?.accountHint?.trim() || null
   const [accounts, setAccounts] = useState<Account[]>([])
   const [totalBalance, setTotalBalance] = useState(0)
   const [balanceVisible, setBalanceVisible] = useState(true)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
+  const voiceRequestHandledRef = useRef(false)
+
+  const matchingAccounts = useMemo(() => {
+    if (!accountHint) return accounts
+    const normalizedHint = accountHint.toLocaleLowerCase('ko-KR').replace(/[\s-]/g, '')
+    return accounts.filter((account) => {
+      const candidates = [account.bankName, account.bankCode, account.alias, account.accountNumber]
+      return candidates.some((candidate) => candidate
+        ?.toLocaleLowerCase('ko-KR')
+        .replace(/[\s-]/g, '')
+        .includes(normalizedHint))
+    })
+  }, [accountHint, accounts])
+
+  const visibleAccounts = accountHint && matchingAccounts.length > 0 ? matchingAccounts : accounts
 
   const loadAccounts = useCallback(async (signal?: AbortSignal, refresh = false, initial = false) => {
     if (!initial) {
@@ -51,6 +69,14 @@ export function AccountsPage() {
     return () => controller.abort()
   }, [])
 
+  useEffect(() => {
+    if (loading || error || !accountHint || voiceRequestHandledRef.current) return
+    voiceRequestHandledRef.current = true
+    if (matchingAccounts.length === 1) {
+      navigate(`/accounts/${encodeURIComponent(matchingAccounts[0].accountNumber)}`, { replace: true })
+    }
+  }, [accountHint, error, loading, matchingAccounts, navigate])
+
   const displayBalance = (value: number) => balanceVisible ? `${value.toLocaleString('ko-KR')}원` : '••••••••원'
 
   return <AppShell className="accounts-canvas" label="내 계좌 확인">
@@ -66,9 +92,11 @@ export function AccountsPage() {
 
     <section className="account-list" aria-labelledby="account-list-title">
       <div className="account-list-heading"><h2 id="account-list-title">계좌별 잔액</h2><span>계좌를 누르면 자세히 볼 수 있어요</span></div>
+      {accountHint && !loading && !error && matchingAccounts.length > 1 && <div className="voice-account-result" role="status"><Icon name="wallet" /><div><strong>“{accountHint}”에 맞는 계좌를 찾았어요</strong><p>확인할 계좌를 선택해 주세요.</p></div></div>}
+      {accountHint && !loading && !error && matchingAccounts.length === 0 && <div className="voice-account-result no-match" role="status"><Icon name="shield" /><div><strong>“{accountHint}”에 맞는 계좌가 없어요</strong><p>대신 연결된 전체 계좌를 보여드릴게요.</p></div></div>}
       {error && <div className="account-state error" role="alert"><strong>계좌 정보를 불러오지 못했어요</strong><p>{error}</p><button type="button" onClick={() => void loadAccounts()}>다시 시도</button></div>}
       {!loading && !error && accounts.length === 0 && <div className="account-state"><strong>연결된 계좌가 없어요</strong><p>등록된 계좌를 확인해 주세요.</p></div>}
-      {accounts.map((account, index) => <button type="button" className="account-card" key={account.accountNumber} onClick={() => navigate(`/accounts/${encodeURIComponent(account.accountNumber)}`)}>
+      {visibleAccounts.map((account, index) => <button type="button" className="account-card" key={account.accountNumber} onClick={() => navigate(`/accounts/${encodeURIComponent(account.accountNumber)}`)}>
         <span className={`bank-mark ${index % 2 === 0 ? 'navy' : 'gold'}`}>{account.bankName.slice(0, 1)}</span>
         <span className="account-info"><small>{account.bankName}</small><strong>{account.alias || `${account.bankName} 계좌`}</strong><span>{account.accountNumber}</span><b>{displayBalance(account.balance)}</b></span>
         <span className="account-chevron"><Icon name="chevron" /><small>상세</small></span>
