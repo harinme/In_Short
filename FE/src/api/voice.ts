@@ -32,7 +32,7 @@ export type TranscriptionResponse = {
   requestId: string
   transcript: string
   createdAt: string
-  interpretation: VoiceInterpretation
+  interpretation?: VoiceInterpretation
 }
 
 async function readError(response: Response) {
