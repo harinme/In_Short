@@ -37,4 +37,8 @@ public class UserRelationship extends BaseEntity {
   @Enumerated(EnumType.STRING)
   @Column(name = "relationship_type", nullable = false, length = 20)
   private RelationshipType relationshipType;
+
+  public void changeType(RelationshipType relationshipType) {
+    this.relationshipType = relationshipType;
+  }
 }

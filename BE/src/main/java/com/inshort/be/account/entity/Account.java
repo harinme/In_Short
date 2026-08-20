@@ -49,4 +49,18 @@ public class Account extends BaseEntity {
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private AccountStatus status;
+
+  public void withdraw(long amount) {
+    if (amount < 1 || balance < amount) {
+      throw new IllegalArgumentException("Insufficient balance");
+    }
+    balance -= amount;
+  }
+
+  public void deposit(long amount) {
+    if (amount < 1) {
+      throw new IllegalArgumentException("Amount must be positive");
+    }
+    balance += amount;
+  }
 }

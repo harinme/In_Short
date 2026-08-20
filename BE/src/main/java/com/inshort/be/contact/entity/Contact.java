@@ -7,7 +7,12 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "contact")
+@Table(
+    name = "contact",
+    uniqueConstraints =
+        @UniqueConstraint(
+            name = "uk_contact_user_bank_account",
+            columnNames = {"user_id", "bank_id", "account_number"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -39,4 +44,13 @@ public class Contact extends BaseEntity {
   /** 계좌번호 */
   @Column(name = "account_number", nullable = false, length = 30)
   private String accountNumber;
+
+  @Column(name = "is_favorite", nullable = false)
+  @Builder.Default
+  private Boolean favorite = false;
+
+  public void update(String alias, boolean favorite) {
+    this.alias = alias;
+    this.favorite = favorite;
+  }
 }
