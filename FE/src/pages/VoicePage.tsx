@@ -306,7 +306,9 @@ export function VoicePage() {
       }
       if (interpretation.nextAction === 'OPEN_ACCOUNTS') {
         await speakText('내 계좌를 확인해 드릴게요.')
-        return navigate('/accounts', { state: interpretation.slots.balance })
+        return navigate('/accounts', {
+          state: { voiceBalance: interpretation.slots.balance },
+        })
       }
       if (interpretation.nextAction === 'OPEN_HISTORY') {
         await speakText('거래 내역을 확인해 드릴게요.')
