@@ -18,7 +18,15 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
   @EntityGraph(attributePaths = "bank")
   Optional<Account> findByUserIdAndAccountNumber(Long userId, String accountNumber);
 
-  Optional<Account> findByBankCodeAndAccountNumber(String bankCode, String accountNumber);
+  @EntityGraph(attributePaths = "bank")
+  @Query(
+      """
+      select a from Account a
+      where a.bank.code = :bankCode
+        and replace(a.accountNumber, '-', '') = replace(:accountNumber, '-', '')
+      """)
+  Optional<Account> findByBankCodeAndAccountNumber(
+      @Param("bankCode") String bankCode, @Param("accountNumber") String accountNumber);
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("select a from Account a where a.id = :id")

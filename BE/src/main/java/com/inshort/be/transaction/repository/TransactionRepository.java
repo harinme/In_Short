@@ -2,6 +2,7 @@ package com.inshort.be.transaction.repository;
 
 import com.inshort.be.transaction.entity.Transaction;
 import com.inshort.be.transaction.enums.TransactionStatus;
+import com.inshort.be.transaction.enums.TransactionChannel;
 import com.inshort.be.transaction.enums.TransactionType;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
@@ -58,4 +59,21 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
       @Param("type") TransactionType type,
       @Param("status") TransactionStatus status,
       @Param("from") LocalDateTime from);
+
+  @EntityGraph(attributePaths = "counterpartyBank")
+  @Query(
+      """
+      select t from Transaction t
+      where t.account.user.id = :userId
+        and t.transactionType = :type
+        and t.status = :status
+        and t.channel <> :excludedChannel
+      order by t.createdAt desc, t.id desc
+      """)
+  Page<Transaction> findRecentCounterparties(
+      @Param("userId") Long userId,
+      @Param("type") TransactionType type,
+      @Param("status") TransactionStatus status,
+      @Param("excludedChannel") TransactionChannel excludedChannel,
+      Pageable pageable);
 }
