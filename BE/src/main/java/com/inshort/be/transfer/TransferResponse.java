@@ -12,4 +12,7 @@ public record TransferResponse(
     String recipientBankName,
     String recipientAccountNumber,
     RiskLevel riskLevel,
-    List<RiskSignal> riskSignals) {}
+    List<RiskSignal> riskSignals,
+    RequiredAction requiredAction,
+    ReviewQuestion reviewQuestion,
+    String caseReference) {}

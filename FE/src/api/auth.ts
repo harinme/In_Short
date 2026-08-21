@@ -1,6 +1,16 @@
 export type AuthUser = { userId: number; name: string; expiresAt: string }
 type CsrfResponse = { headerName: string; token: string }
 
+export class AuthApiError extends Error {
+  readonly status: number
+
+  constructor(status: number, message: string) {
+    super(message)
+    this.name = 'AuthApiError'
+    this.status = status
+  }
+}
+
 async function readError(response: Response) {
   const body = await response.json().catch(() => null) as { detail?: string; message?: string } | null
   return body?.detail || body?.message || `요청 처리에 실패했습니다. (${response.status})`
@@ -15,7 +25,7 @@ export async function csrfHeaders() {
 
 export async function login(phone: string, pin: string) {
   const response = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json', ...await csrfHeaders() }, body: JSON.stringify({ phone, pin }) })
-  if (!response.ok) throw new Error(await readError(response))
+  if (!response.ok) throw new AuthApiError(response.status, await readError(response))
   return response.json() as Promise<AuthUser>
 }
 

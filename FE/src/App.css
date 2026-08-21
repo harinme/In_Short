@@ -253,13 +253,9 @@ button:focus-visible { outline: 3px solid #f4a641; outline-offset: 3px; }
 .step-progress > div > span { width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid #9aa7b3; border-radius: 50%; font-size: 14px; font-weight: 900; }
 .step-progress > div > small { font-size: 14px; font-weight: 800; }
 .step-progress > div.active { border-color: var(--navy); color: var(--navy); }.step-progress > div.active > span { border-color: var(--navy); background: var(--navy); color: white; }
-.transfer-step { min-height: calc(100dvh - 142px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); display: flex; flex-direction: column; }
+.transfer-step { min-height: calc(min(100dvh, var(--app-height)) - 142px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); display: flex; flex-direction: column; }
 .step-copy > span { color: var(--mint); font-size: 14px; font-weight: 900; }
 .step-copy h1 { margin: 6px 0 9px; font-size: 28px; line-height: 1.28; letter-spacing: -.045em; }
-.step-copy h1:has(br) { font-size: 0; }
-.step-copy h1:has(br)::after { content: "누구에게 보낼까요?"; font-size: 28px; }
-.amount-copy h1:has(br)::after { content: "얼마를 보낼까요?"; }
-.confirm-step .step-copy h1:has(br)::after { content: "송금 내용을 확인해 주세요"; }
 .step-copy p { margin: 0 0 27px; color: var(--muted); font-size: 14px; line-height: 1.55; font-weight: 650; letter-spacing: -.01em; }
 .field-label { margin: 0 0 9px; color: var(--navy-dark); font-size: 16px; font-weight: 850; letter-spacing: -.025em; }
 .recipient-suggestions { margin: 2px 0 25px; }
@@ -305,6 +301,14 @@ select.form-control { padding-right: 38px; font-size: 15px; }
 .fraud-heading > div > span { color: #a95600; font-size: 14px; font-weight: 900; }
 .fraud-heading h1 { margin: 5px 0 0; font-size: 26px; line-height: 1.35; letter-spacing: -.04em; }
 .fraud-intro { margin: 20px 0 14px; color: var(--muted); font-size: 15px; line-height: 1.6; font-weight: 650; }
+.risk-reasons { margin: 18px 0; padding: 17px 18px; border: 1px solid #e4c58f; border-radius: 20px; background: #fffdf7; }
+.risk-reasons strong { display: block; color: var(--navy-dark); font-size: 18px; }
+.risk-reasons p { position: relative; margin: 10px 0 0; padding-left: 17px; color: #72511a; font-size: 16px; font-weight: 750; line-height: 1.45; }
+.risk-reasons p::before { content: ''; position: absolute; left: 1px; top: .58em; width: 7px; height: 7px; border-radius: 50%; background: #b36a12; }
+.risk-pin-step .pin-dots { align-self: center; margin-top: 24px; }
+.risk-pin-step .form-error { width: 100%; text-align: center; }
+.risk-pin-step .pin-keypad { align-self: center; margin-top: 0; }
+.risk-pin-step .flow-primary { margin-top: 16px; }
 .warning-banner { min-height: 56px; margin: 0 0 16px; padding: 10px 13px; display: flex; align-items: center; gap: 11px; border: 2px solid #df8a28; border-radius: 18px; background: #fff4df; color: #794000; }
 .warning-banner > span { padding: 5px 8px; border-radius: 9px; background: #a95600; color: white; font-size: 14px; font-weight: 900; }.warning-banner > strong { font-size: 16px; }
 .fraud-question-count { margin: 8px 0 10px; color: var(--navy); font-size: 15px; font-weight: 900; }
@@ -319,6 +323,10 @@ select.form-control { padding-right: 38px; font-size: 15px; }
 .danger-next-action { padding: 14px; display: flex; flex-direction: column; gap: 5px; border-radius: 17px; background: #fff0f0; text-align: left; }.danger-next-action strong { color: #a52323; font-size: 16px; }.danger-next-action span { color: #5b3030; font-size: 15px; line-height: 1.5; font-weight: 700; }
 .fraud-detected .fraud-stop { margin-top: 18px; border-color: #a52323; background: #a52323; color: white; }
 .fraud-stop { min-height: 62px; border: 2px solid var(--navy); border-radius: 20px; background: white; color: var(--navy); font-size: 16px; font-weight: 900; }
+.fraud-contact-actions { display: grid; gap: 10px; margin-top: 20px; }
+.fraud-call { min-height: 66px; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 2px solid #a52323; border-radius: 20px; background: white; color: #821d1d; text-decoration: none; }
+.fraud-call.primary { background: #fff0f0; }
+.fraud-call strong { font-size: 17px; }.fraud-call span { font-size: 16px; font-weight: 900; }
 .full-width { width: 100%; }
 .transfer-complete { min-height: calc(100dvh - 96px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); display: flex; align-items: center; flex-direction: column; padding-top: 120px; text-align: center; }
 .complete-icon { position: relative; width: 96px; height: 96px; display: grid; place-items: center; margin-bottom: 24px; border-radius: 50%; background: var(--mint); color: white; animation: success-enter .48s ease-out both; }
