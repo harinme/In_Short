@@ -3,6 +3,7 @@ package com.inshort.be.transfer;
 import com.inshort.be.account.entity.Account;
 import com.inshort.be.global.entity.BaseEntity;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.*;
 
@@ -44,6 +45,22 @@ public class TransferRiskAssessment extends BaseEntity {
   @Column(name = "customer_confirmed", nullable = false)
   private Boolean customerConfirmed;
 
+  @Column(name = "expires_at")
+  private LocalDateTime expiresAt;
+
+  @Column(name = "confirmed_at")
+  private LocalDateTime confirmedAt;
+
+  @Column(name = "consumed_at")
+  private LocalDateTime consumedAt;
+
+  @Column(name = "confirmation_attempts", nullable = false)
+  @Builder.Default
+  private Integer confirmationAttempts = 0;
+
+  @Column(name = "retention_until", nullable = false)
+  private LocalDateTime retentionUntil;
+
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, length = 20)
   private TransferResult result;
@@ -65,7 +82,41 @@ public class TransferRiskAssessment extends BaseEntity {
         .riskSignals(
             signals.stream().map(Enum::name).sorted().reduce((a, b) -> a + "," + b).orElse(""))
         .customerConfirmed(request.riskConfirmed())
+        .expiresAt(
+            result == TransferResult.REVIEW_REQUIRED ? LocalDateTime.now().plusMinutes(5) : null)
+        .retentionUntil(LocalDateTime.now().plusYears(5))
         .result(result)
         .build();
+  }
+
+  public boolean isExpired(LocalDateTime now) {
+    return expiresAt == null || !expiresAt.isAfter(now);
+  }
+
+  public boolean isConsumed() {
+    return consumedAt != null;
+  }
+
+  public void confirmAndConsume(LocalDateTime now) {
+    customerConfirmed = true;
+    confirmedAt = now;
+    consumedAt = now;
+  }
+
+  public boolean registerFailedConfirmation(LocalDateTime now) {
+    confirmationAttempts++;
+    if (confirmationAttempts >= 5) {
+      riskLevel = RiskLevel.HIGH;
+      if (!riskSignals.contains(RiskSignal.PIN_CONFIRMATION_FAILED.name())) {
+        riskSignals =
+            riskSignals.isBlank()
+                ? RiskSignal.PIN_CONFIRMATION_FAILED.name()
+                : riskSignals + "," + RiskSignal.PIN_CONFIRMATION_FAILED.name();
+      }
+      result = TransferResult.BLOCKED;
+      consumedAt = now;
+      return true;
+    }
+    return false;
   }
 }

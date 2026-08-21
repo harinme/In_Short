@@ -6,6 +6,7 @@ import { CharacterImage } from '../components/CharacterImage'
 import { Icon } from '../components/Icon'
 import { toast } from '../stores/toast'
 import mainCharacter from '../assets/main-character.png'
+import { AuthApiError } from '../api/auth'
 
 type LoginStep = 'phone' | 'pin'
 const PHONE_LENGTH = 11
@@ -46,9 +47,15 @@ export function LoginPage() {
       await login(phone, nextPin)
       toast.success('로그인되었어요.')
       navigate('/', { replace: true })
-    } catch {
+    } catch (cause) {
       setPin('')
-      toast.error('전화번호 또는 비밀번호를 확인해 주세요.')
+      if (cause instanceof AuthApiError && cause.status === 401) {
+        toast.error('전화번호 또는 비밀번호를 확인해 주세요.')
+      } else if (cause instanceof AuthApiError && cause.status === 403) {
+        toast.error('보안 확인 정보가 만료됐어요. 다시 입력해 주세요.')
+      } else {
+        toast.error(cause instanceof Error ? cause.message : '로그인하지 못했습니다.')
+      }
     } finally { setPending(false) }
   }
 

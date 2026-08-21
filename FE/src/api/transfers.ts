@@ -1,7 +1,9 @@
 import { csrfHeaders } from './auth'
 
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH'
-export type RiskSignal = 'LARGE_AMOUNT' | 'NEW_RECIPIENT' | 'DAILY_ACCUMULATION' | 'NEAR_DAILY_LIMIT'
+export type RiskSignal = 'LARGE_AMOUNT' | 'NEW_RECIPIENT' | 'DAILY_ACCUMULATION' | 'NEAR_DAILY_LIMIT' | 'RAPID_TRANSFERS' | 'SPLIT_TRANSFER' | 'RECENT_HIGH_RISK_RECIPIENT' | 'PIN_CONFIRMATION_FAILED'
+export type RequiredAction = 'NONE' | 'CUSTOMER_CONFIRMATION' | 'STOP_AND_VERIFY'
+export type ReviewQuestion = 'NONE' | 'REQUESTED_BY_OTHER' | 'REPEATED_TRANSFER_INSTRUCTION' | 'SAFE_ACCOUNT_INSTRUCTION'
 
 export type Recipient = {
   bankCode: string
@@ -15,7 +17,7 @@ export type RecipientSuggestion = Recipient & { alias: string | null; favorite: 
 
 export type TransferResponse = {
   transferId: string
-  result: 'COMPLETED' | 'REVIEW_REQUIRED'
+  result: 'COMPLETED' | 'REVIEW_REQUIRED' | 'BLOCKED'
   amount: number
   fee: number
   balanceAfter: number | null
@@ -24,6 +26,9 @@ export type TransferResponse = {
   recipientAccountNumber: string
   riskLevel: RiskLevel
   riskSignals: RiskSignal[]
+  requiredAction: RequiredAction
+  reviewQuestion: ReviewQuestion
+  caseReference: string | null
 }
 
 export type TransferInput = {
@@ -35,6 +40,7 @@ export type TransferInput = {
   channel: 'MOBILE'
   requestId: string
   riskConfirmed: boolean
+  confirmationPin?: string | null
 }
 
 async function readError(response: Response) {

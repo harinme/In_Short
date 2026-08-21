@@ -17,7 +17,9 @@ public record TransferRequest(
     @Size(max = 100) String memo,
     @NotNull TransactionChannel channel,
     @NotBlank @Pattern(regexp = "[0-9a-fA-F-]{36}") String requestId,
-    boolean riskConfirmed) {
+    boolean riskConfirmed,
+    @Pattern(regexp = "\\d{6}", message = "Confirmation PIN must be six digits")
+        String confirmationPin) {
 
   @AssertTrue(message = "Source and recipient accounts must be different")
   public boolean isDifferentAccount() {

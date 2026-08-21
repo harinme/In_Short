@@ -1,8 +1,8 @@
 package com.inshort.be.transaction.repository;
 
 import com.inshort.be.transaction.entity.Transaction;
-import com.inshort.be.transaction.enums.TransactionStatus;
 import com.inshort.be.transaction.enums.TransactionChannel;
+import com.inshort.be.transaction.enums.TransactionStatus;
 import com.inshort.be.transaction.enums.TransactionType;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
@@ -43,8 +43,55 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
   Optional<Transaction> findFirstByTransferIdAndTransactionType(
       String transferId, TransactionType transactionType);
 
-  boolean existsByAccountIdAndCounterpartyBankIdAndCounterpartyAccountAndTransactionType(
-      Long accountId, Long bankId, String accountNumber, TransactionType transactionType);
+  @Query(
+      """
+      select count(t) from Transaction t
+      where t.account.id = :accountId
+        and t.counterpartyBank.id = :bankId
+        and t.counterpartyAccount = :accountNumber
+        and t.transactionType = :type
+        and t.status = :status
+        and t.createdAt >= :from
+      """)
+  long countTransfersToRecipientSince(
+      @Param("accountId") Long accountId,
+      @Param("bankId") Long bankId,
+      @Param("accountNumber") String accountNumber,
+      @Param("type") TransactionType type,
+      @Param("status") TransactionStatus status,
+      @Param("from") LocalDateTime from);
+
+  @Query(
+      """
+      select count(t) from Transaction t
+      where t.account.id = :accountId
+        and t.transactionType = :type
+        and t.status = :status
+        and t.createdAt >= :from
+      """)
+  long countTransfersSince(
+      @Param("accountId") Long accountId,
+      @Param("type") TransactionType type,
+      @Param("status") TransactionStatus status,
+      @Param("from") LocalDateTime from);
+
+  @Query(
+      """
+      select coalesce(sum(t.amount), 0) from Transaction t
+      where t.account.id = :accountId
+        and t.counterpartyBank.id = :bankId
+        and t.counterpartyAccount = :accountNumber
+        and t.transactionType = :type
+        and t.status = :status
+        and t.createdAt >= :from
+      """)
+  long sumTransfersToRecipientSince(
+      @Param("accountId") Long accountId,
+      @Param("bankId") Long bankId,
+      @Param("accountNumber") String accountNumber,
+      @Param("type") TransactionType type,
+      @Param("status") TransactionStatus status,
+      @Param("from") LocalDateTime from);
 
   @Query(
       """
